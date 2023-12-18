@@ -8,6 +8,7 @@
     xmlns:models="clr-namespace:VideoDownloader.Models"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="{Binding Title}"
+    Icon="/Assets/Logo.ico"
     Width="1000"
     Height="600"
     mc:Ignorable="d">

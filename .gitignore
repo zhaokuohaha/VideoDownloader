@@ -2,3 +2,5 @@
 VideoDownlower/obj
 *.exe
 .vs
+VideoDownloader/bin
+VideoDownloader/obj

@@ -20,7 +20,7 @@ public partial class MainWindowViewModel : ObservableObject
     private string videoFolder;
 
     [ObservableProperty]
-    private string url = "https://v.youku.com/v_show/id_XNDQ0OTY2ODQ1Ng==.html";
+    private string url;
 
     [ObservableProperty]
     private string videoTitle;
@@ -83,7 +83,7 @@ public partial class MainWindowViewModel : ObservableObject
        await _contentDialogService.ShowAlertAsync("关于", "摘星辰\n" +
            "版本： 1.0.0\n" +
            "作者：zzz\n" +
-           "GitHub：https://github.com/lepoco/wpfui/tree/main", 
+           "GitHub：https://github.com/zhaokuohaha/VideoDownloader", 
            "确定");
     }
 
