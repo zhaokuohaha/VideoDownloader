@@ -10,6 +10,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using VideoDownloader.ViewModels;
+using Wpf.Ui;
+using Wpf.Ui.Controls;
 
 namespace VideoDownloader.Views
 {
@@ -21,6 +23,10 @@ namespace VideoDownloader.Views
         public MainWindow()
         {
             InitializeComponent();
+            
+            Ioc.Default.GetRequiredService<IContentDialogService>().SetContentPresenter(RootContentDialog);
+            Ioc.Default.GetRequiredService<ISnackbarService>().SetSnackbarPresenter(SnackbarPresenter);
+
             DataContext = Ioc.Default.GetRequiredService<MainWindowViewModel>();
         }
 

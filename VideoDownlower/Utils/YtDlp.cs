@@ -1,36 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
-using VideoDownloader.Models;
-using CliWrap;
+﻿using CliWrap;
+using CliWrap.EventStream;
 using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using VideoDownloader.Models;
+using Wpf.Ui.Controls;
 
 namespace VideoDownloader.Utils
 {
-    public class YtDlp(string url)
+    public class YtDlp(string url, string videoFolder)
     {
         private readonly string ExeFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "yt-dlp.exe");
-        private readonly string Workdir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Videos");
+        
         private string _getVideoTitle => $"-e {url}";
         private string _getVideoThumbnail => $"--list-thumbnails {url}";
         private string _listFormats => $"-F {url}";
-
-        public YtDlp(string url, string workdir) : this(url)
-        {
-            if (!string.IsNullOrEmpty(workdir))
-            {
-                Workdir = workdir;
-            }
-
-            if (!Directory.Exists(Workdir))
-            {
-                Directory.CreateDirectory(Workdir);
-            }
-        }
+        private Func<string,string> _downloadByFormat => (formatId) => $"-f {formatId} {url}";
 
         private async Task<string> QueryInternal(string arg)
         {
@@ -39,32 +25,16 @@ namespace VideoDownloader.Utils
 
             var result = await Cli.Wrap(ExeFile)
                 .WithArguments(arg)
-                .WithWorkingDirectory(Workdir)
+                .WithWorkingDirectory(videoFolder)
                 // This can be simplified with `ExecuteBufferedAsync()`
                 .WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdOutBuffer))
                 .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stdErrBuffer))
                 .ExecuteAsync();
 
-            // Access stdout & stderr buffered in-memory as strings
             var stdOut = stdOutBuffer.ToString();
-            var stdErr = stdErrBuffer.ToString();
+            //var stdErr = stdErrBuffer.ToString();
 
             return stdOut;
-
-            //var process =new Process
-            //{
-            //    StartInfo = new ProcessStartInfo
-            //    {
-            //        FileName = ExeFile,
-            //        Arguments = arg,
-            //        UseShellExecute = false,
-            //        WindowStyle = ProcessWindowStyle.Normal,
-            //    }
-            //};
-            //process.Start();
-
-            //var output = process.StandardOutput.ReadToEnd();
-            //return output;
         }
 
         public async Task<string> GetVideoTitle()
@@ -99,7 +69,7 @@ namespace VideoDownloader.Utils
         public async Task<List<VideoFormat>> GetVideoFormats()
         {
             var output = await QueryInternal(_listFormats);
-            var titleLine = "ID EXT RESOLUTION";
+            var titleLine = "RESOLUTION";
             var data = new List<VideoFormat>();
 
             var isDataLine = false;
@@ -119,7 +89,7 @@ namespace VideoDownloader.Utils
                             Id = rowData[0],
                             Ext = rowData[1],
                             Resolution = rowData[2],
-                            FileSize = rowData[3]
+                            FileSize = rowData.FirstOrDefault(x => x.EndsWith("MiB")) ?? "未知"
                         });
                     }
                 }
@@ -131,6 +101,41 @@ namespace VideoDownloader.Utils
             }
 
             return data;
+        }
+
+        internal async Task<bool> DownloadByFormat(VideoFormat format, Action<double> onProgressChanged)
+        {
+            var stdOutBuffer = new StringBuilder();
+            var stdErrBuffer = new StringBuilder();
+
+            var cmd = Cli.Wrap(ExeFile)
+                .WithArguments(_downloadByFormat(format.Id))
+                .WithWorkingDirectory(videoFolder);
+            var index = 0;
+            await foreach (var cmdEvent in cmd.ListenAsync())
+            {
+                switch (cmdEvent)
+                {
+                    case StartedCommandEvent started:
+                        onProgressChanged?.Invoke(0);
+                        break;
+                    case StandardOutputCommandEvent stdOut:
+                        var text = stdOut.Text;
+                        var regx = Regex.Match(text, @"(\d+(.\d+)?)%");
+                        if (regx.Success && double.TryParse(regx.Groups[1].Value, out var progress))
+                        {
+                            onProgressChanged?.Invoke(progress);
+                        }
+                        break;
+                    case StandardErrorCommandEvent stdErr:
+                        // TODO log
+                        break;
+                    case ExitedCommandEvent exited:
+                        return exited.ExitCode == 0;
+                }
+            }
+
+            return true;
         }
     }
 }

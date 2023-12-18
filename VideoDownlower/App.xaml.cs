@@ -1,9 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
-using System.Configuration;
-using System.Data;
 using System.Windows;
 using VideoDownloader.ViewModels;
+using Wpf.Ui;
 
 namespace VideoDownloader
 {
@@ -24,6 +23,8 @@ namespace VideoDownloader
         private static ServiceProvider ConfigureServices()
         {
             var services = new ServiceCollection();
+            services.AddSingleton<ISnackbarService, SnackbarService>();
+            services.AddSingleton<IContentDialogService, ContentDialogService>();
             RegisterViewModels(services);
             return services.BuildServiceProvider();
         }
