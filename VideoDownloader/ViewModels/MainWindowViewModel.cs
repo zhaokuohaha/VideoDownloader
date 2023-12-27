@@ -23,10 +23,7 @@ public partial class MainWindowViewModel : ObservableObject
     private string url;
 
     [ObservableProperty]
-    private string videoTitle;
-
-    [ObservableProperty]
-    private string videoThumb;
+    private VideoInfo videoInfo;
 
     [ObservableProperty]
     private double downloadProgress;
@@ -43,7 +40,6 @@ public partial class MainWindowViewModel : ObservableObject
         ShowSettingCommand = new RelayCommand(ShowSetting);
         OpenDownloadPathCommand = new RelayCommand(OpenDownloadPath);
         QueryVidesCommand = new RelayCommand(QueryVideos);
-        DownloadVideoCommand = new RelayCommand<VideoFormat>(DownloadVideoAsync);
         ChangeVideoFolder(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Videos"));
         _snackbarService = snackbarService;
         _contentDialogService = contentDialogService;
@@ -53,13 +49,11 @@ public partial class MainWindowViewModel : ObservableObject
     public ICommand ShowSettingCommand { get; }
     public ICommand OpenDownloadPathCommand { get; }
     public ICommand QueryVidesCommand { get; }
-    public ICommand DownloadVideoCommand { get; }
 
     public string Title { get; set; } = "摘星辰";
 
     public YtDlp YtDlp { get; set; }
 
-    public ObservableCollection<VideoFormat> VideoFormat { get; set; } = [];
 
     private void ChangeVideoFolder(string path)
     {
@@ -81,7 +75,7 @@ public partial class MainWindowViewModel : ObservableObject
     private async void ShowInfo()
     {
        await _contentDialogService.ShowAlertAsync("关于", "摘星辰\n" +
-           "版本： 1.0.0\n" +
+           "版本： 1.2.0\n" +
            "作者：zzz\n" +
            "GitHub：https://github.com/zhaokuohaha/VideoDownloader", 
            "确定");
@@ -97,30 +91,16 @@ public partial class MainWindowViewModel : ObservableObject
         try
         {
             VideoInfoStatus = VideoInfoStatus.Querying;
-            VideoFormat.Clear();
             YtDlp = new YtDlp (Url, VideoFolder);
-            VideoTitle = await YtDlp.GetVideoTitle();
-            VideoThumb = await YtDlp.GetVideoThumbnail();
-            var formats = await YtDlp.GetVideoFormats();
-            if (formats.Count != 0)
-            {
-                foreach (var format in formats)
-                {
-                    VideoFormat.Add(format);
-                }
-            }
-            else
-            {
-
-            }
-
-            if (VideoFormat.Count != 0)
-            {
-                VideoInfoStatus = VideoInfoStatus.Completed;
-            }
-            else
+            var videoInfo = await YtDlp.GetVideoInfo();
+            if (videoInfo == null)
             {
                 VideoInfoStatus = VideoInfoStatus.Error;
+            }
+            else
+            {
+                VideoInfoStatus = VideoInfoStatus.Completed;
+                VideoInfo = videoInfo!;
             }
         }
         catch(Exception ex)
@@ -130,21 +110,36 @@ public partial class MainWindowViewModel : ObservableObject
 
     }
 
-    private async void DownloadVideoAsync(VideoFormat? format)
+    [RelayCommand]
+    private async void OnDownloadVideo(string formatId)
     {
-        if (format == null || YtDlp == null)
+        // 自定义下载格式，先组装formatId
+        if (string.IsNullOrEmpty(formatId))
         {
-            return;
+            var formatIds = VideoInfo.Formats.Where(x => x.IsSelected).Select(x => x.FormatId);
+            if (!formatIds.Any())
+            {
+                _snackbarService.Show(
+                    "下载取消",
+                    "未选择任何格式",
+                    ControlAppearance.Caution,
+                    new SymbolIcon(SymbolRegular.Warning16),
+                    TimeSpan.FromSeconds(5)
+                );
+                return;
+            }
+            formatId = string.Join("+", formatIds);
         }
 
+        // 下载
         try
         {
             DownloadProgressVisible = true;
-            await YtDlp.DownloadByFormat(format, progress => DownloadProgress = progress);
+            await YtDlp.DownloadByFormat(formatId, progress => DownloadProgress = progress);
             _snackbarService.Show(
                    "下载完成",
                    "请打开下载文件夹查看",
-                   ControlAppearance.Info,
+                   ControlAppearance.Success,
                     new SymbolIcon(SymbolRegular.Checkmark12),
                     TimeSpan.FromSeconds(5)
             );

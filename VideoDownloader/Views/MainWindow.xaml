@@ -1,4 +1,4 @@
-﻿<Window
+﻿<ui:FluentWindow
     x:Class="VideoDownloader.Views.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -8,157 +8,323 @@
     xmlns:models="clr-namespace:VideoDownloader.Models"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="{Binding Title}"
+    Width="1200"
+    Height="800"
+    ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+    ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    Background="#EFEFEF"
+    ExtendsContentIntoTitleBar="True"
     Icon="/Assets/Logo.ico"
-    Width="1000"
-    Height="600"
+    WindowCornerPreference="Default"
+    WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
     <Grid x:Name="root">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-
-        <StackPanel
-            Grid.Row="0"
-            HorizontalAlignment="Right"
-            Orientation="Horizontal"
-            Height="50"
-            Margin="10,0">
-            <ui:Button
-                BorderBrush="Transparent"
-                Command="{Binding ShowInfoCommand}"
-                Cursor="Hand"
-                Foreground="CornflowerBlue"
-                Icon="{ui:SymbolIcon Info28}"
-                ToolTip="关于" />
-            <ui:Button
-                BorderBrush="Transparent"
-                Command="{Binding OpenDownloadPathCommand}"
-                Cursor="Hand"
-                Foreground="BlueViolet"
-                Icon="{ui:SymbolIcon FolderOpen16}"
-                ToolTip="打开下载文件夹" />
-            <ui:Button
-                BorderBrush="Transparent"
-                Command="{Binding ShowSettingCommand}"
-                Cursor="Hand"
-                Icon="{ui:SymbolIcon Settings32}"
-                Foreground="PaleVioletRed"
-                ToolTip="设置"/>
-        </StackPanel>
+        <Grid Grid.Row="0">
+            <ui:TitleBar
+                x:Name="TitleBar"
+                Title="{Binding Title}"
+                Grid.Row="0"
+                Height="30"
+                CloseWindowByDoubleClickOnIcon="True">
+                <ui:TitleBar.Icon>
+                    <ui:ImageIcon Source="/Assets/Logo.png" />
+                </ui:TitleBar.Icon>
+            </ui:TitleBar>
+        </Grid>
         <Grid Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <StackPanel
-                x:Name="nLogo"
                 Grid.Row="0"
-                HorizontalAlignment="Center">
-                <Image
-                    Width="100"
-                    Height="100"
-                    Source="/Assets/Logo.png" />
-                <!--<TextBlock FontSize="24" Text="{Binding Title}" />-->
+                Margin="10,0"
+                HorizontalAlignment="Right"
+                Orientation="Horizontal">
+                <ui:Button
+                    BorderBrush="Transparent"
+                    Command="{Binding ShowInfoCommand}"
+                    Cursor="Hand"
+                    FontSize="30"
+                    Foreground="CornflowerBlue"
+                    Icon="{ui:SymbolIcon Info28}"
+                    ToolTip="关于" />
+                <ui:Button
+                    BorderBrush="Transparent"
+                    Command="{Binding OpenDownloadPathCommand}"
+                    Cursor="Hand"
+                    FontSize="30"
+                    Foreground="PaleVioletRed"
+                    Icon="{ui:SymbolIcon FolderOpen16}"
+                    ToolTip="打开下载文件夹" />
+                <ui:Button
+                    BorderBrush="Transparent"
+                    Command="{Binding ShowSettingCommand}"
+                    Cursor="Hand"
+                    FontSize="30"
+                    Icon="{ui:SymbolIcon Settings32}"
+                    ToolTip="设置" />
             </StackPanel>
-            <StackPanel Grid.Row="1" Margin="10">
-                <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                    <ui:TextBox
-                        Width="600"
-                        BorderBrush="#ffdddd"
-                        Cursor="Hand"
-                        PlaceholderText="请输入视频地址"
-                        Text="{Binding Url}" />
-                    <ui:Button
-                        Margin="-40,0,0,0"
-                        BorderBrush="Transparent"
-                        Command="{Binding QueryVidesCommand}"
-                        Cursor="Hand"
-                        Foreground="BlueViolet"
-                        Icon="{ui:SymbolIcon Send28, Filled=True}"/>
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <StackPanel
+                    x:Name="nLogo"
+                    Grid.Row="0"
+                    HorizontalAlignment="Center">
+                    <Image
+                        Width="100"
+                        Height="100"
+                        Source="/Assets/Logo.png" />
                 </StackPanel>
+                <StackPanel Grid.Row="1" Margin="10">
+                    <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                        <ui:TextBox
+                            Width="880"
+                            Height="50"
+                            VerticalContentAlignment="Center"
+                            BorderThickness="1.2"
+                            Cursor="Hand"
+                            PlaceholderText="请输入视频地址"
+                            Text="{Binding Url}" />
+                        <ui:Button
+                            Width="100"
+                            Height="50"
+                            Margin="10,0"
+                            Command="{Binding QueryVidesCommand}"
+                            Cursor="Hand"
+                            FontSize="32"
+                            Foreground="BlueViolet"
+                            Icon="{ui:SymbolIcon Send28,
+                                                 Filled=True}" />
+                    </StackPanel>
 
-                <TextBlock
-                    Margin="30"
-                    Grid.Row="1"
-                    HorizontalAlignment="Center"
-                    Foreground="Gray"
-                    FontSize="26"
-                    Text="ಥ_ಥ 视频解析失败 ..."
-                    Visibility="{Binding VideoInfoStatus, Converter={StaticResource EnumVisibilityConverter}, ConverterParameter={x:Static models:VideoInfoStatus.Error}}" />
-
-                <ui:ProgressRing
-                    Margin="30"
-                    Grid.Row="1"
-                    IsIndeterminate="True"
-                    Visibility="{Binding VideoInfoStatus, Converter={StaticResource EnumVisibilityConverter}, ConverterParameter={x:Static models:VideoInfoStatus.Querying}}" />
-               
-                <StackPanel Width="600" Visibility="{Binding VideoInfoStatus, Converter={StaticResource EnumVisibilityConverter}, ConverterParameter={x:Static models:VideoInfoStatus.Completed}}">
-                    <Border
-                        Background="LightSteelBlue"
-                        Padding="10, 0"
-                        Margin="0,5"
-                        CornerRadius="10">
-                        <StackPanel
-                            Margin="0,10"
-                            VerticalAlignment="Center"
-                            Orientation="Horizontal">
-                            <Border
-                                Width="180"
-                                Height="100"
-                                CornerRadius="10">
-                                <Border.Background>
-                                    <ImageBrush ImageSource="{Binding VideoThumb}" Stretch="UniformToFill" />
-                                </Border.Background>
-                            </Border>
-                            <TextBlock Margin="10"
-                                VerticalAlignment="Center"
-                                Text="{Binding VideoTitle}"
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Border>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Label Grid.Column="0" Content="分辨率" />
-                        <Label Grid.Column="1" Content="格式" />
-                        <Label Grid.Column="2" Content="大小" />
-                        <Label Grid.Column="3" Content="操作" />
-                    </Grid>
-                    <ListView
+                    <TextBlock
                         Grid.Row="1"
-                        Width="600"
-                        Height="200"
-                        ItemsSource="{Binding VideoFormat}">
-                        <ListView.ItemTemplate>
-                            <DataTemplate DataType="{x:Type models:VideoFormat}">
-                                <StackPanel HorizontalAlignment="Stretch" Orientation="Horizontal">
-                                    <TextBlock VerticalAlignment="Center" Width="150" Text="{Binding Resolution}" />
-                                    <TextBlock VerticalAlignment="Center" Width="150" Text="{Binding Ext}" />
-                                    <TextBlock VerticalAlignment="Center" Width="150" Text="{Binding FileSize}" />
-                                    <ui:Button
-                                        Width="60"
-                                        Command="{Binding DataContext.DownloadVideoCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ItemsControl}}"
-                                        CommandParameter="{Binding .}"
-                                        Cursor="Hand"
-                                        Icon="{ui:SymbolIcon ArrowDownload16}" />
+                        Margin="30"
+                        HorizontalAlignment="Center"
+                        FontSize="26"
+                        Foreground="Gray"
+                        Text="ಥ_ಥ 视频解析失败 ..."
+                        Visibility="{Binding VideoInfoStatus, Converter={StaticResource EnumVisibilityConverter}, ConverterParameter={x:Static models:VideoInfoStatus.Error}}" />
+
+                    <ui:ProgressRing
+                        Grid.Row="1"
+                        Margin="30"
+                        IsIndeterminate="True"
+                        Visibility="{Binding VideoInfoStatus, Converter={StaticResource EnumVisibilityConverter}, ConverterParameter={x:Static models:VideoInfoStatus.Querying}}" />
+
+                    <StackPanel Width="1000" Visibility="{Binding VideoInfoStatus, Converter={StaticResource EnumVisibilityConverter}, ConverterParameter={x:Static models:VideoInfoStatus.Completed}}">
+                        <TextBlock Margin="0,10,0,0" Text="推荐格式下载" />
+                        <Border
+                            Margin="0,10"
+                            Padding="10,0"
+                            Background="LightSteelBlue"
+                            CornerRadius="10">
+                            <StackPanel
+                                Margin="0,10"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Center"
+                                Orientation="Horizontal">
+                                <Border
+                                    Width="180"
+                                    Height="100"
+                                    CornerRadius="10">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="{Binding VideoInfo.Thumbnail}" Stretch="UniformToFill" />
+                                    </Border.Background>
+                                </Border>
+                                <StackPanel Width="700" VerticalAlignment="Center">
+                                    <TextBlock
+                                        Margin="10"
+                                        VerticalAlignment="Center"
+                                        Text="{Binding VideoInfo.Title}"
+                                        TextWrapping="Wrap" />
+                                    <StackPanel
+                                        Margin="10"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Bottom"
+                                        Orientation="Horizontal">
+                                        <TextBlock
+                                            Width="100"
+                                            Foreground="Gray"
+                                            Text="{Binding VideoInfo.Format}" />
+                                        <TextBlock
+                                            Width="100"
+                                            Foreground="Gray"
+                                            Text="{Binding VideoInfo.Resolution}" />
+                                        <TextBlock
+                                            Width="100"
+                                            Foreground="Gray"
+                                            Text="{Binding VideoInfo.Ext}" />
+                                        <TextBlock
+                                            Width="100"
+                                            Foreground="Gray"
+                                            Text="{Binding VideoInfo.FileSizeStr}" />
+                                    </StackPanel>
                                 </StackPanel>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
+                                <ui:Button
+                                    Width="100"
+                                    Height="100"
+                                    Appearance="Transparent"
+                                    BorderBrush="Transparent"
+                                    Command="{Binding DownloadVideoCommand}"
+                                    CommandParameter="{Binding VideoInfo.FormatId}"
+                                    Cursor="Hand"
+                                    FontSize="48"
+                                    Foreground="BlueViolet"
+                                    Icon="{ui:SymbolIcon ArrowDownload16}" />
+                            </StackPanel>
+                        </Border>
+
+
+                        <TextBlock Margin="0,10" Text="自选格式下载" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0" Height="280">
+                                <Border
+                                    Margin="0,0,5,0"
+                                    BorderBrush="PaleVioletRed"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                    <ListBox
+                                        Grid.Row="1"
+                                        Margin="5"
+                                        ItemsSource="{Binding VideoInfo.Videos}">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style BasedOn="{StaticResource DefaultListBoxItemStyle}" TargetType="{x:Type ListBoxItem}">
+                                                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type models:VideoFormat}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel
+                                                        Grid.Column="0"
+                                                        HorizontalAlignment="Stretch"
+                                                        Orientation="Horizontal">
+                                                        <ui:SymbolIcon Margin="10,5" Symbol="Video16" />
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            Width="100"
+                                                            VerticalAlignment="Center"
+                                                            Text="{Binding Format}" />
+                                                    </StackPanel>
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        Width="100"
+                                                        VerticalAlignment="Center"
+                                                        Text="{Binding Resolution}" />
+                                                    <TextBlock
+                                                        Grid.Column="2"
+                                                        Width="100"
+                                                        VerticalAlignment="Center"
+                                                        Text="{Binding Ext}" />
+                                                    <TextBlock
+                                                        Grid.Column="3"
+                                                        Width="100"
+                                                        VerticalAlignment="Center"
+                                                        Text="{Binding FileSizeStr}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Border>
+                            </Grid>
+                            <Grid
+                                Grid.Column="1"
+                                Width="480"
+                                Height="280"
+                                VerticalAlignment="Top"
+                                Visibility="{Binding VideoInfo.AnyAudio, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <Border
+                                    Margin="5,0,0,0"
+                                    BorderBrush="BlueViolet"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                    <ListBox
+                                        Grid.Row="1"
+                                        Margin="5"
+                                        ItemsSource="{Binding VideoInfo.Audios}">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style BasedOn="{StaticResource DefaultListBoxItemStyle}" TargetType="ListBoxItem">
+                                                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type models:VideoFormat}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel
+                                                        Grid.Column="0"
+                                                        HorizontalAlignment="Stretch"
+                                                        Orientation="Horizontal">
+                                                        <ui:SymbolIcon Margin="10,5" Symbol="Speaker232" />
+                                                        <TextBlock
+                                                            Width="100"
+                                                            VerticalAlignment="Center"
+                                                            Text="{Binding Resolution}" />
+                                                    </StackPanel>
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        Width="100"
+                                                        VerticalAlignment="Center"
+                                                        Text="{Binding Ext}" />
+                                                    <TextBlock
+                                                        Grid.Column="2"
+                                                        Width="100"
+                                                        VerticalAlignment="Center"
+                                                        Text="{Binding FileSizeStr}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Border>
+                            </Grid>
+                        </Grid>
+                        <ui:Button
+                            Width="1000"
+                            Margin="0,10"
+                            HorizontalAlignment="Center"
+                            Appearance="Primary"
+                            Command="{Binding DownloadVideoCommand}"
+                            Cursor="Hand"
+                            FontSize="32"
+                            Icon="{ui:SymbolIcon ArrowDownload16}">
+                            下载所选格式
+                        </ui:Button>
+                    </StackPanel>
                 </StackPanel>
+            </Grid>
+            <StackPanel Grid.Row="2" Visibility="{Binding DownloadProgressVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                <ProgressBar
+                    Height="8"
+                    Foreground="CornflowerBlue"
+                    Value="{Binding DownloadProgress}" />
             </StackPanel>
+            <ui:SnackbarPresenter x:Name="SnackbarPresenter" Grid.Row="2" />
+            <ContentPresenter x:Name="RootContentDialog" Grid.Row="1" />
         </Grid>
-        <StackPanel Grid.Row="2" Visibility="{Binding DownloadProgressVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-            <ProgressBar Value="{Binding DownloadProgress}" />
-        </StackPanel>
-        <ui:SnackbarPresenter x:Name="SnackbarPresenter" Grid.Row="2" />
-        <ContentPresenter x:Name="RootContentDialog" Grid.Row="1"/>
     </Grid>
-</Window>
+</ui:FluentWindow>
 

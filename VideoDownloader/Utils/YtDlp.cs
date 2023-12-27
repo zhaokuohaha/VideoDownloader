@@ -1,22 +1,21 @@
 ﻿using CliWrap;
 using CliWrap.EventStream;
+using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using VideoDownloader.Models;
-using Wpf.Ui.Controls;
 
 namespace VideoDownloader.Utils
 {
-    public class YtDlp(string url, string videoFolder)
+    public partial class YtDlp(string url, string videoFolder)
     {
-        private readonly string ExeFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "yt-dlp.exe");
+        private readonly string ExeFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets/core/bin/yt-dlp.exe");
         
-        private string _getVideoTitle => $"-e {url}";
-        private string _getVideoThumbnail => $"--list-thumbnails {url}";
-        private string _listFormats => $"-F {url}";
-        private Func<string,string> _downloadByFormat => (formatId) => $"-f {formatId} {url}";
+        private string _getVideoTitle => $"-j \"{url}\"";
+        
+        private Func<string,string> _downloadByFormat => (formatId) => $"-f \"{formatId}\" \"{url}\"";
 
         private async Task<string> QueryInternal(string arg)
         {
@@ -37,81 +36,36 @@ namespace VideoDownloader.Utils
             return stdOut;
         }
 
-        public async Task<string> GetVideoTitle()
+        public async Task<VideoInfo> GetVideoInfo()
         {
+            var serializeOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            };
             var output = await QueryInternal(_getVideoTitle);
-            return output;
-        }
-
-        public async Task<string> GetVideoThumbnail()
-        {
-            var output = await QueryInternal(_getVideoThumbnail);
-            var titleLine = "ID Width   Height  URL";
-            var isDataLine = false;
-            var url = string.Empty;
-            foreach (var line in output.Split('\n'))
+            try
             {
-                if (isDataLine)
-                {
-                    url = line.Split(' ').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).LastOrDefault();
-                    break;
-                }
+                var videoInfo = JsonSerializer.Deserialize<VideoInfo>(output, serializeOptions)!;
+                videoInfo.Videos = new ObservableCollection<VideoFormat>(videoInfo.Formats.Where(x => x.IsVideo));
+                videoInfo.Audios = new ObservableCollection<VideoFormat>(videoInfo.Formats.Where(x => !x.IsVideo));
 
-                if (line.Contains(titleLine))
-                {
-                    isDataLine = true;
-                }
+                return videoInfo;
             }
-
-            return url;
-        }
-
-        public async Task<List<VideoFormat>> GetVideoFormats()
-        {
-            var output = await QueryInternal(_listFormats);
-            var titleLine = "RESOLUTION";
-            var data = new List<VideoFormat>();
-
-            var isDataLine = false;
-            foreach (var line in output.Split('\n'))
+            catch (Exception ex)
             {
-                if (isDataLine)
-                {
-                    var rowData = line.Split([' ', '|'])
-                        .Where(x => !string.IsNullOrWhiteSpace(x))
-                        .Select(x => x.Trim())
-                        .ToList();
-
-                    if (rowData.Count > 4)
-                    {
-                        data.Add(new VideoFormat
-                        {
-                            Id = rowData[0],
-                            Ext = rowData[1],
-                            Resolution = rowData[2],
-                            FileSize = rowData.FirstOrDefault(x => x.EndsWith("MiB")) ?? "未知"
-                        });
-                    }
-                }
-
-                if (line.Contains(titleLine))
-                {
-                    isDataLine = true;
-                }
+                return null;
             }
-
-            return data;
         }
 
-        internal async Task<bool> DownloadByFormat(VideoFormat format, Action<double> onProgressChanged)
+        internal async Task<bool> DownloadByFormat(string format, Action<double> onProgressChanged)
         {
             var stdOutBuffer = new StringBuilder();
             var stdErrBuffer = new StringBuilder();
 
+            var commandText = _downloadByFormat(format);
             var cmd = Cli.Wrap(ExeFile)
-                .WithArguments(_downloadByFormat(format.Id))
+                .WithArguments(commandText)
                 .WithWorkingDirectory(videoFolder);
-            var index = 0;
             await foreach (var cmdEvent in cmd.ListenAsync())
             {
                 switch (cmdEvent)
@@ -121,8 +75,8 @@ namespace VideoDownloader.Utils
                         break;
                     case StandardOutputCommandEvent stdOut:
                         var text = stdOut.Text;
-                        var regx = Regex.Match(text, @"(\d+(.\d+)?)%");
-                        if (regx.Success && double.TryParse(regx.Groups[1].Value, out var progress))
+                        var regex = DownloadProgressRegex().Match(text);
+                        if (regex.Success && double.TryParse(regex.Groups[1].Value, out var progress))
                         {
                             onProgressChanged?.Invoke(progress);
                         }
@@ -137,5 +91,8 @@ namespace VideoDownloader.Utils
 
             return true;
         }
+
+        [GeneratedRegex(@"(\d+(.\d+)?)%")]
+        private static partial Regex DownloadProgressRegex();
     }
 }
