@@ -1,4 +1,5 @@
 using System.Globalization;
+using Avalonia;
 using Avalonia.Data.Converters;
 
 namespace VideoDownloader.UI.Converters;
@@ -12,6 +13,10 @@ public class EnumToBoolConverter : IValueConverter
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        if (value is true && parameter is not null)
+        {
+            return parameter;
+        }
+        return AvaloniaProperty.UnsetValue;
     }
 }

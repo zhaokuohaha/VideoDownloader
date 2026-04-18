@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
+using VideoDownloader.Core.Services;
 using VideoDownloader.UI.ViewModels;
 using VideoDownloader.UI.Views;
 
@@ -21,7 +22,17 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var vm = Services!.GetRequiredService<MainWindowViewModel>();
+            SettingsViewModel.ApplyTheme(vm.SettingsViewModel.ThemeMode);
             desktop.MainWindow = new MainWindow
+            {
+                DataContext = vm
+            };
+        }
+        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
+        {
+            var vm = Services!.GetRequiredService<MainWindowViewModel>();
+            SettingsViewModel.ApplyTheme(vm.SettingsViewModel.ThemeMode);
+            singleView.MainView = new HomeView
             {
                 DataContext = vm
             };

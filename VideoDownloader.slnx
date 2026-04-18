@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/VideoDownloader.Android/VideoDownloader.Android.csproj" />
     <Project Path="src/VideoDownloader.Core/VideoDownloader.Core.csproj" />
     <Project Path="src/VideoDownloader.Desktop/VideoDownloader.Desktop.csproj" />
     <Project Path="src/VideoDownloader.UI/VideoDownloader.UI.csproj" />

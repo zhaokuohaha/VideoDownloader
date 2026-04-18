@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using VideoDownloader.Core.Services;
 
 namespace VideoDownloader.Desktop.Services;
@@ -46,5 +47,25 @@ public class DesktopDialogService : IDialogService
         {
             await dialog.ShowDialog(desktop.MainWindow);
         }
+    }
+
+    public async Task<string?> PickFolderAsync(string title)
+    {
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            && desktop.MainWindow?.StorageProvider is { } storageProvider)
+        {
+            var result = await storageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = title,
+                AllowMultiple = false,
+            });
+
+            if (result.Count > 0)
+            {
+                return result[0].Path.LocalPath;
+            }
+        }
+
+        return null;
     }
 }

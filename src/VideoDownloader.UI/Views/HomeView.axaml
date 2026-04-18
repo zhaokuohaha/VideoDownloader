@@ -1,0 +1,167 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:VideoDownloader.UI.ViewModels"
+             xmlns:models="using:VideoDownloader.Core.Models"
+             xmlns:conv="using:VideoDownloader.UI.Converters"
+             x:Class="VideoDownloader.UI.Views.HomeView"
+             x:DataType="vm:MainWindowViewModel">
+
+    <UserControl.Resources>
+        <conv:EnumToBoolConverter x:Key="EnumToBoolConverter" />
+    </UserControl.Resources>
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="10">
+            <!-- Logo -->
+            <Image Source="avares://VideoDownloader.UI/Assets/Logo.png"
+                   Width="100" Height="100"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,10" />
+
+            <!-- URL Input -->
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Spacing="10">
+                <TextBox Width="880" Height="46"
+                         VerticalContentAlignment="Center"
+                         PlaceholderText="请输入视频地址"
+                         Text="{Binding Url}" />
+                <Button Width="80" Height="46"
+                        Command="{Binding QueryVidesCommand}"
+                        Cursor="Hand"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center">
+                    <PathIcon Data="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"
+                              Width="24" Height="24" />
+                </Button>
+            </StackPanel>
+
+            <!-- Error State -->
+            <TextBlock Margin="30"
+                       HorizontalAlignment="Center"
+                       FontSize="26"
+                       Foreground="{DynamicResource SemiColorTextSecondary}"
+                       Text="ಥ_ಥ 视频解析失败 ..."
+                       IsVisible="{Binding VideoInfoStatus, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static models:VideoInfoStatus.Error}}" />
+
+            <!-- Loading State -->
+            <ProgressBar Margin="30"
+                         HorizontalAlignment="Center"
+                         IsIndeterminate="True"
+                         Width="60"
+                         Height="60"
+                         IsVisible="{Binding VideoInfoStatus, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static models:VideoInfoStatus.Querying}}" />
+
+            <!-- Completed State -->
+            <StackPanel Width="1000"
+                        IsVisible="{Binding VideoInfoStatus, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static models:VideoInfoStatus.Completed}}">
+
+                <!-- Recommended Format -->
+                <TextBlock Margin="0,10,0,0" Text="推荐格式下载" FontWeight="SemiBold" />
+                <Border Margin="0,10" Padding="10"
+                        Background="{DynamicResource SemiColorFillQuaternary}"
+                        CornerRadius="10">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="10">
+                        <!-- Thumbnail -->
+                        <Border Width="180" Height="100" CornerRadius="10" ClipToBounds="True">
+                            <Image Source="{Binding ThumbnailBitmap}" Stretch="UniformToFill" />
+                        </Border>
+                        <!-- Video Info -->
+                        <StackPanel Width="700" VerticalAlignment="Center" Spacing="4">
+                            <TextBlock Margin="10" Text="{Binding VideoInfo.Title}" TextWrapping="Wrap" />
+                            <StackPanel Margin="10,0" Orientation="Horizontal" Spacing="4">
+                                <TextBlock Width="100" Foreground="{DynamicResource SemiColorTextSecondary}" Text="{Binding VideoInfo.Format}" />
+                                <TextBlock Width="100" Foreground="{DynamicResource SemiColorTextSecondary}" Text="{Binding VideoInfo.Resolution}" />
+                                <TextBlock Width="100" Foreground="{DynamicResource SemiColorTextSecondary}" Text="{Binding VideoInfo.Ext}" />
+                                <TextBlock Width="100" Foreground="{DynamicResource SemiColorTextSecondary}" Text="{Binding VideoInfo.FileSizeStr}" />
+                            </StackPanel>
+                        </StackPanel>
+                        <!-- Download Button -->
+                        <Button Width="80" Height="80"
+                                Background="Transparent" BorderThickness="0"
+                                Command="{Binding DownloadVideoCommand}"
+                                CommandParameter="{Binding VideoInfo.FormatId}"
+                                Cursor="Hand"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center">
+                            <PathIcon Data="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"
+                                      Width="36" Height="36" Foreground="{DynamicResource SemiColorPrimary}" />
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- Custom Format Selection -->
+                <TextBlock Margin="0,10" Text="自选格式下载" FontWeight="SemiBold" />
+                <Grid ColumnDefinitions="*,Auto">
+                    <!-- Video Formats -->
+                    <Border Grid.Column="0" Margin="0,0,5,0"
+                            BorderBrush="{DynamicResource SemiColorDanger}" BorderThickness="1" CornerRadius="6">
+                        <ListBox Height="280" Margin="5"
+                                 ItemsSource="{Binding VideoInfo.Videos}"
+                                 SelectionMode="Multiple,Toggle">
+                            <ListBox.Styles>
+                                <Style Selector="ListBoxItem" x:DataType="models:VideoFormat">
+                                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                </Style>
+                            </ListBox.Styles>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="models:VideoFormat">
+                                    <Grid ColumnDefinitions="Auto,*,*,*,*">
+                                        <PathIcon Grid.Column="0" Margin="4,0"
+                                                  Data="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource SemiColorDanger}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Format}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Resolution}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="3" Text="{Binding Ext}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="4" Text="{Binding FileSizeStr}" VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+
+                    <!-- Audio Formats -->
+                    <Border Grid.Column="1" Width="480" Margin="5,0,0,0"
+                            BorderBrush="{DynamicResource SemiColorPrimary}" BorderThickness="1" CornerRadius="6"
+                            IsVisible="{Binding VideoInfo.AnyAudio}">
+                        <ListBox Height="280" Margin="5"
+                                 ItemsSource="{Binding VideoInfo.Audios}"
+                                 SelectionMode="Multiple,Toggle">
+                            <ListBox.Styles>
+                                <Style Selector="ListBoxItem" x:DataType="models:VideoFormat">
+                                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                </Style>
+                            </ListBox.Styles>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="models:VideoFormat">
+                                    <Grid ColumnDefinitions="Auto,*,*,*">
+                                        <PathIcon Grid.Column="0" Margin="4,0"
+                                                  Data="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource SemiColorPrimary}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Resolution}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Ext}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="3" Text="{Binding FileSizeStr}" VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+                </Grid>
+
+                <!-- Download Selected Button -->
+                <Button Width="1000" Margin="0,10"
+                        HorizontalAlignment="Center"
+                        HorizontalContentAlignment="Center"
+                        Classes="accent"
+                        Command="{Binding DownloadVideoCommand}"
+                        Cursor="Hand"
+                        FontSize="18"
+                        Height="50">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"
+                                  Width="20" Height="20" />
+                        <TextBlock Text="下载所选格式" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -7,6 +7,9 @@
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>2.0.0</ApplicationDisplayVersion>
     <AndroidManifest>AndroidManifest.xml</AndroidManifest>
+    <!-- Adjust these paths to your local environment -->
+    <AndroidSdkDirectory>C:\Users\zeng\AppData\Local\Android\Sdk</AndroidSdkDirectory>
+    <JavaSdkDirectory>D:\Software\AndroidStudio\jbr</JavaSdkDirectory>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:VideoDownloader.UI.ViewModels"
+             xmlns:models="using:VideoDownloader.Core.Models"
+             xmlns:conv="using:VideoDownloader.UI.Converters"
+             x:Class="VideoDownloader.UI.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+    <UserControl.Resources>
+        <conv:EnumToBoolConverter x:Key="EnumToBoolConverter" />
+    </UserControl.Resources>
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" Padding="40,20">
+        <StackPanel MaxWidth="600" Spacing="24">
+
+            <TextBlock Text="设置" FontSize="24" FontWeight="Bold" Margin="0,0,0,8" />
+
+            <!-- Theme Mode -->
+            <Border Padding="20" CornerRadius="8"
+                    Background="{DynamicResource SemiColorFillQuaternary}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="主题模式" FontSize="16" FontWeight="SemiBold" />
+                    <StackPanel Orientation="Horizontal" Spacing="16">
+                        <RadioButton Content="跟随系统"
+                                     IsChecked="{Binding ThemeMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static models:ThemeMode.System}}"
+                                     GroupName="Theme" />
+                        <RadioButton Content="浅色"
+                                     IsChecked="{Binding ThemeMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static models:ThemeMode.Light}}"
+                                     GroupName="Theme" />
+                        <RadioButton Content="深色"
+                                     IsChecked="{Binding ThemeMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static models:ThemeMode.Dark}}"
+                                     GroupName="Theme" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Download Folder -->
+            <Border Padding="20" CornerRadius="8"
+                    Background="{DynamicResource SemiColorFillQuaternary}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="下载文件夹" FontSize="16" FontWeight="SemiBold" />
+                    <Grid ColumnDefinitions="*,Auto" >
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding DownloadFolderPath}"
+                                 IsReadOnly="True"
+                                 VerticalContentAlignment="Center"
+                                 Height="38" />
+                        <Button Grid.Column="1" Margin="8,0,0,0"
+                                Content="浏览..."
+                                Command="{Binding PickFolderCommand}"
+                                Height="38"
+                                VerticalContentAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Proxy URL -->
+            <Border Padding="20" CornerRadius="8"
+                    Background="{DynamicResource SemiColorFillQuaternary}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="代理设置" FontSize="16" FontWeight="SemiBold" />
+                    <TextBox Text="{Binding ProxyUrl}"
+                             PlaceholderText="例如: http://127.0.0.1:7890"
+                             VerticalContentAlignment="Center"
+                             Height="38" />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

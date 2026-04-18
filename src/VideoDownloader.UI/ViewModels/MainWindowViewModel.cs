@@ -33,25 +33,38 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private Bitmap? thumbnailBitmap;
 
+    [ObservableProperty]
+    private PageType currentPage = PageType.Home;
+
     private static readonly HttpClient _httpClient = new();
     private readonly INotificationService _notificationService;
     private readonly IDialogService _dialogService;
     private readonly IPlatformService _platformService;
 
+    public SettingsViewModel SettingsViewModel { get; }
+
     public MainWindowViewModel(
         INotificationService notificationService,
         IDialogService dialogService,
-        IPlatformService platformService)
+        IPlatformService platformService,
+        ISettingsService settingsService)
     {
         _notificationService = notificationService;
         _dialogService = dialogService;
         _platformService = platformService;
 
+        var settings = settingsService.Load();
+        SettingsViewModel = new SettingsViewModel(settingsService, dialogService, settings);
+
         ShowInfoCommand = new RelayCommand(ShowInfo);
         ShowSettingCommand = new RelayCommand(ShowSetting);
         OpenDownloadPathCommand = new RelayCommand(OpenDownloadPath);
         QueryVidesCommand = new RelayCommand(QueryVideos);
-        ChangeVideoFolder(_platformService.GetDefaultDownloadFolder());
+
+        var folder = !string.IsNullOrEmpty(settings.DownloadFolderPath)
+            ? settings.DownloadFolderPath
+            : _platformService.GetDefaultDownloadFolder();
+        ChangeVideoFolder(folder);
     }
 
     public ICommand ShowInfoCommand { get; }
@@ -78,6 +91,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     private void ShowSetting()
     {
+        CurrentPage = CurrentPage == PageType.Settings ? PageType.Home : PageType.Settings;
     }
 
     private async void ShowInfo()
@@ -123,7 +137,6 @@ public partial class MainWindowViewModel : ObservableObject
     {
         if (VideoInfo == null || YtDlp == null) return;
 
-        // 自定义下载格式，先组装formatId
         if (string.IsNullOrEmpty(formatId))
         {
             var formatIds = VideoInfo.Formats.Where(x => x.IsSelected).Select(x => x.FormatId);
@@ -139,7 +152,6 @@ public partial class MainWindowViewModel : ObservableObject
             formatId = string.Join("+", formatIds);
         }
 
-        // 下载
         try
         {
             DownloadProgressVisible = true;

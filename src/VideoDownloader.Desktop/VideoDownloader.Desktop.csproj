@@ -17,7 +17,7 @@
 
   <!-- Copy yt-dlp and ffmpeg binaries to output -->
   <ItemGroup>
-    <None Include="..\..\VideoDownloader.WPF\Assets\core\bin\**\*">
+    <None Include="Assets\core\bin\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Assets\core\bin\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </None>

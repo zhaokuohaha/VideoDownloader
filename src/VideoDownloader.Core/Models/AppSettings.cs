@@ -4,6 +4,6 @@ namespace VideoDownloader.Core.Models
     {
         public string? DownloadFolderPath { get; set; }
         public string? ProxyUrl { get; set; }
-        public string ThemeMode { get; set; } = "System";
+        public ThemeMode ThemeMode { get; set; } = ThemeMode.System;
     }
 }

@@ -1,4 +1,5 @@
 using Android.App;
+using Android.Runtime;
 using Avalonia.Android;
 using Microsoft.Extensions.DependencyInjection;
 using VideoDownloader.Android.Services;
@@ -9,7 +10,8 @@ using VideoDownloader.UI.ViewModels;
 namespace VideoDownloader.Android;
 
 [Application]
-public class MainApplication : AvaloniaAndroidApplication<App>
+public class MainApplication(nint javaReference, JniHandleOwnership transfer)
+    : AvaloniaAndroidApplication<App>(javaReference, transfer)
 {
     public override void OnCreate()
     {

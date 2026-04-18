@@ -1,7 +1,15 @@
-﻿VideoDownlower/bin
-VideoDownlower/obj
-*.exe
-.vs
-bin
-obj
-VideoDownloader.WPF/Assets/core
+﻿# Build output
+bin/
+obj/
+
+# IDE
+.vs/
+*.user
+*.suo
+
+# yt-dlp and FFmpeg binaries (large, download separately)
+src/VideoDownloader.Desktop/Assets/core/
+
+# OS files
+Thumbs.db
+.DS_Store
