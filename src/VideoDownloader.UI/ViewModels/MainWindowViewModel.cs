@@ -1,20 +1,15 @@
-using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Collections.ObjectModel;
 using System.IO;
-using System.Net.Http;
 using System.Windows.Input;
 using VideoDownloader.Core.Models;
 using VideoDownloader.Core.Services;
-using VideoDownloader.Core.Utils;
 
 namespace VideoDownloader.UI.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    [ObservableProperty]
-    private VideoInfoStatus videoInfoStatus = VideoInfoStatus.Default;
-
     [ObservableProperty]
     private string videoFolder = string.Empty;
 
@@ -22,25 +17,24 @@ public partial class MainWindowViewModel : ObservableObject
     private string url = string.Empty;
 
     [ObservableProperty]
-    private VideoInfo? videoInfo;
-
-    [ObservableProperty]
-    private double downloadProgress;
-
-    [ObservableProperty]
-    private bool downloadProgressVisible;
-
-    [ObservableProperty]
-    private Bitmap? thumbnailBitmap;
-
-    [ObservableProperty]
     private PageType currentPage = PageType.Home;
 
-    private static readonly HttpClient _httpClient = new();
+    [ObservableProperty]
+    private bool isAllSelected;
+
+    [ObservableProperty]
+    private string? batchResolution;
+
+    [ObservableProperty]
+    private bool hasVideoItems;
+
     private readonly INotificationService _notificationService;
     private readonly IDialogService _dialogService;
     private readonly IPlatformService _platformService;
+    private bool _suppressSelectAllSync;
 
+    public ObservableCollection<VideoItemViewModel> VideoItems { get; } = [];
+    public ObservableCollection<string> BatchResolutions { get; } = [];
     public SettingsViewModel SettingsViewModel { get; }
 
     public MainWindowViewModel(
@@ -59,7 +53,6 @@ public partial class MainWindowViewModel : ObservableObject
         ShowInfoCommand = new RelayCommand(ShowInfo);
         ShowSettingCommand = new RelayCommand(ShowSetting);
         OpenDownloadPathCommand = new RelayCommand(OpenDownloadPath);
-        QueryVidesCommand = new RelayCommand(QueryVideos);
 
         var folder = !string.IsNullOrEmpty(settings.DownloadFolderPath)
             ? settings.DownloadFolderPath
@@ -70,23 +63,127 @@ public partial class MainWindowViewModel : ObservableObject
     public ICommand ShowInfoCommand { get; }
     public ICommand ShowSettingCommand { get; }
     public ICommand OpenDownloadPathCommand { get; }
-    public ICommand QueryVidesCommand { get; }
 
     public string Title { get; set; } = "摘星辰";
 
-    public YtDlp? YtDlp { get; set; }
+    partial void OnIsAllSelectedChanged(bool value)
+    {
+        if (_suppressSelectAllSync) return;
+        foreach (var item in VideoItems)
+            item.IsSelected = value;
+    }
+
+    [RelayCommand]
+    private async Task QueryVideos()
+    {
+        if (string.IsNullOrWhiteSpace(Url)) return;
+
+        var urls = Url.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(u => !string.IsNullOrWhiteSpace(u))
+            .Distinct()
+            .ToList();
+
+        if (urls.Count == 0) return;
+
+        VideoItems.Clear();
+        HasVideoItems = false;
+
+        var ytDlpPath = _platformService.GetYtDlpPath();
+
+        foreach (var u in urls)
+        {
+            var item = new VideoItemViewModel(u, VideoFolder, ytDlpPath, _notificationService);
+            item.StatusChanged += UpdateBatchResolutions;
+            item.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(VideoItemViewModel.IsSelected))
+                    SyncSelectAllState();
+            };
+            VideoItems.Add(item);
+        }
+
+        HasVideoItems = true;
+
+        var tasks = VideoItems.Select(item => item.QueryAsync());
+        await Task.WhenAll(tasks);
+    }
+
+    [RelayCommand]
+    private async Task DownloadSelected()
+    {
+        var selectedItems = VideoItems
+            .Where(v => v.IsSelected && v.Status == VideoItemStatus.Ready)
+            .ToList();
+
+        if (selectedItems.Count == 0)
+        {
+            _notificationService.Show("提示", "请先选择要下载的视频", NotificationType.Warning);
+            return;
+        }
+
+        int targetHeight = 0;
+        if (!string.IsNullOrEmpty(BatchResolution))
+        {
+            var digits = new string(BatchResolution.Where(char.IsDigit).ToArray());
+            int.TryParse(digits, out targetHeight);
+        }
+
+        var tasks = selectedItems.Select(item =>
+        {
+            VideoFormat? format = targetHeight > 0 ? item.FindClosestFormat(targetHeight) : null;
+            return item.DownloadAsync(format);
+        });
+
+        await Task.WhenAll(tasks);
+    }
+
+    private void UpdateBatchResolutions()
+    {
+        var readyItems = VideoItems.Where(v => v.Status == VideoItemStatus.Ready).ToList();
+
+        var allLabels = readyItems
+            .SelectMany(v => v.QualityOptions)
+            .Where(f => f.HeightPixels > 0)
+            .Select(f => f.QualityLabel)
+            .ToList();
+
+        var uniqueLabels = allLabels
+            .Distinct()
+            .OrderByDescending(label =>
+            {
+                var digits = new string(label.Where(char.IsDigit).ToArray());
+                return int.TryParse(digits, out var n) ? n : 0;
+            })
+            .ToList();
+
+        BatchResolutions.Clear();
+        foreach (var label in uniqueLabels)
+            BatchResolutions.Add(label);
+
+        if (BatchResolutions.Count > 0 && (BatchResolution == null || !BatchResolutions.Contains(BatchResolution)))
+        {
+            var mostCommon = allLabels
+                .GroupBy(l => l)
+                .OrderByDescending(g => g.Count())
+                .First().Key;
+            BatchResolution = mostCommon;
+        }
+    }
+
+    private void SyncSelectAllState()
+    {
+        _suppressSelectAllSync = true;
+        IsAllSelected = VideoItems.Count > 0 && VideoItems.All(v => v.IsSelected);
+        _suppressSelectAllSync = false;
+    }
 
     private void ChangeVideoFolder(string path)
     {
         if (VideoFolder != path)
-        {
             VideoFolder = path;
-        }
 
         if (!Directory.Exists(VideoFolder))
-        {
             Directory.CreateDirectory(VideoFolder);
-        }
     }
 
     private void ShowSetting()
@@ -103,89 +200,8 @@ public partial class MainWindowViewModel : ObservableObject
             "确定");
     }
 
-    private async void QueryVideos()
-    {
-        if (string.IsNullOrEmpty(Url))
-        {
-            return;
-        }
-
-        try
-        {
-            VideoInfoStatus = VideoInfoStatus.Querying;
-            YtDlp = new YtDlp(Url, VideoFolder, _platformService.GetYtDlpPath());
-            var info = await YtDlp.GetVideoInfo();
-            if (info == null)
-            {
-                VideoInfoStatus = VideoInfoStatus.Error;
-            }
-            else
-            {
-                VideoInfoStatus = VideoInfoStatus.Completed;
-                VideoInfo = info;
-                await LoadThumbnailAsync(info.Thumbnail);
-            }
-        }
-        catch (Exception)
-        {
-            VideoInfoStatus = VideoInfoStatus.Error;
-        }
-    }
-
-    [RelayCommand]
-    private async Task OnDownloadVideo(string? formatId)
-    {
-        if (VideoInfo == null || YtDlp == null) return;
-
-        if (string.IsNullOrEmpty(formatId))
-        {
-            var formatIds = VideoInfo.Formats.Where(x => x.IsSelected).Select(x => x.FormatId);
-            if (!formatIds.Any())
-            {
-                _notificationService.Show(
-                    "下载取消",
-                    "未选择任何格式",
-                    NotificationType.Warning
-                );
-                return;
-            }
-            formatId = string.Join("+", formatIds);
-        }
-
-        try
-        {
-            DownloadProgressVisible = true;
-            await YtDlp.DownloadByFormat(formatId, progress => DownloadProgress = progress);
-            _notificationService.Show(
-                "下载完成",
-                "请打开下载文件夹查看",
-                NotificationType.Success
-            );
-        }
-        finally
-        {
-            DownloadProgressVisible = false;
-            DownloadProgress = 0;
-        }
-    }
-
     private void OpenDownloadPath()
     {
         _platformService.OpenFolder(VideoFolder);
-    }
-
-    private async Task LoadThumbnailAsync(string? url)
-    {
-        if (string.IsNullOrEmpty(url)) return;
-        try
-        {
-            var bytes = await _httpClient.GetByteArrayAsync(url);
-            using var stream = new MemoryStream(bytes);
-            ThumbnailBitmap = new Bitmap(stream);
-        }
-        catch
-        {
-            ThumbnailBitmap = null;
-        }
     }
 }

@@ -1,13 +1,5 @@
 namespace VideoDownloader.Core.Models
 {
-    public enum VideoInfoStatus
-    {
-        Default = 0,
-        Querying = 1,
-        Completed = 2,
-        Error = 3,
-    }
-
     public enum PageType
     {
         Home,
@@ -19,5 +11,14 @@ namespace VideoDownloader.Core.Models
         System,
         Light,
         Dark,
+    }
+
+    public enum VideoItemStatus
+    {
+        Querying,
+        Ready,
+        Downloading,
+        Downloaded,
+        Error,
     }
 }

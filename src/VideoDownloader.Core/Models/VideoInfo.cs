@@ -21,6 +21,19 @@ namespace VideoDownloader.Core.Models
 
         public bool IsVideo => VideoExt != default && VideoExt != "none";
 
+        public int HeightPixels
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(Resolution)) return 0;
+                var parts = Resolution.Split('x');
+                if (parts.Length == 2 && int.TryParse(parts[1], out var h)) return h;
+                return 0;
+            }
+        }
+
+        public string QualityLabel => HeightPixels > 0 ? $"{HeightPixels}p" : Resolution ?? "未知";
+
         private string CalcFileSize()
         {
             if (Filesize == default && FilesizeApprox == default)
