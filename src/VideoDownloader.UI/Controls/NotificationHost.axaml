@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="VideoDownloader.UI.Controls.NotificationHost">
+    <Border x:Name="NotificationBorder"
+            IsVisible="False"
+            HorizontalAlignment="Center"
+            MinWidth="300"
+            MaxWidth="500"
+            Padding="16,12"
+            CornerRadius="8"
+            Background="#323232">
+        <Border.BoxShadow>0 2 8 0 #40000000</Border.BoxShadow>
+        <StackPanel Spacing="4">
+            <TextBlock x:Name="TitleText" FontWeight="SemiBold" FontSize="14" Foreground="White" />
+            <TextBlock x:Name="MessageText" FontSize="13" Foreground="#DDDDDD" TextWrapping="Wrap" />
+        </StackPanel>
+    </Border>
+</UserControl>

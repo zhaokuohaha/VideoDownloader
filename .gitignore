@@ -2,6 +2,6 @@
 VideoDownlower/obj
 *.exe
 .vs
-VideoDownloader/bin
-VideoDownloader/obj
-VideoDownloader/Assets/core
+bin
+obj
+VideoDownloader.WPF/Assets/core
