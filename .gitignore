@@ -13,3 +13,4 @@ src/VideoDownloader.Desktop/Assets/core/
 # OS files
 Thumbs.db
 .DS_Store
+release

@@ -37,18 +37,20 @@ public partial class VideoItemViewModel : ObservableObject
     private readonly string _videoFolder;
     private readonly string _ytDlpPath;
     private readonly INotificationService _notificationService;
+    private readonly YtDlpOptions? _ytDlpOptions;
     private YtDlp? _ytDlp;
 
     public ObservableCollection<VideoFormat> QualityOptions { get; } = [];
 
     public event Action? StatusChanged;
 
-    public VideoItemViewModel(string url, string videoFolder, string ytDlpPath, INotificationService notificationService)
+    public VideoItemViewModel(string url, string videoFolder, string ytDlpPath, INotificationService notificationService, YtDlpOptions? ytDlpOptions = null)
     {
         this.url = url;
         _videoFolder = videoFolder;
         _ytDlpPath = ytDlpPath;
         _notificationService = notificationService;
+        _ytDlpOptions = ytDlpOptions;
     }
 
     public async Task QueryAsync()
@@ -56,7 +58,7 @@ public partial class VideoItemViewModel : ObservableObject
         try
         {
             Status = VideoItemStatus.Querying;
-            _ytDlp = new YtDlp(Url, _videoFolder, _ytDlpPath);
+            _ytDlp = new YtDlp(Url, _videoFolder, _ytDlpPath, _ytDlpOptions);
             var info = await _ytDlp.GetVideoInfo();
             if (info == null)
             {

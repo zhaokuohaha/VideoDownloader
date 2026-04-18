@@ -1,0 +1,84 @@
+name: Build Release
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish Windows x64
+        run: dotnet publish src/VideoDownloader.Desktop/VideoDownloader.Desktop.csproj -c Release -r win-x64 --self-contained -o publish/win-x64
+
+      - name: Package zip
+        run: cd publish && zip -r ../VideoDownloader-Windows-x64.zip win-x64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VideoDownloader-Windows-x64
+          path: VideoDownloader-Windows-x64.zip
+
+  build-macos:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - rid: osx-x64
+            name: macOS-x64
+          - rid: osx-arm64
+            name: macOS-arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish ${{ matrix.name }}
+        run: dotnet publish src/VideoDownloader.Desktop/VideoDownloader.Desktop.csproj -c Release -r ${{ matrix.rid }} --self-contained -o publish/${{ matrix.rid }}
+
+      - name: Package zip
+        run: cd publish && zip -r ../VideoDownloader-${{ matrix.name }}.zip ${{ matrix.rid }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VideoDownloader-${{ matrix.name }}
+          path: VideoDownloader-${{ matrix.name }}.zip
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Android workload
+        run: dotnet workload install android
+
+      - name: Publish Android
+        run: dotnet publish src/VideoDownloader.Android/VideoDownloader.Android.csproj -c Release
+
+      - name: Package zip
+        run: |
+          mkdir -p artifacts
+          cp src/VideoDownloader.Android/bin/Release/net10.0-android/publish/*.apk artifacts/
+          cd artifacts && zip -r ../VideoDownloader-Android.zip *.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VideoDownloader-Android
+          path: VideoDownloader-Android.zip

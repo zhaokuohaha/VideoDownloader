@@ -21,4 +21,21 @@ namespace VideoDownloader.Core.Models
         Downloaded,
         Error,
     }
+
+    public enum CookieSourceType
+    {
+        None,
+        Browser,
+        File,
+    }
+
+    public enum CookieBrowserType
+    {
+        Chrome,
+        Firefox,
+        Edge,
+        Safari,
+        Opera,
+        Brave,
+    }
 }

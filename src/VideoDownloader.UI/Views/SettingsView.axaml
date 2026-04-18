@@ -54,13 +54,116 @@
                 </StackPanel>
             </Border>
 
-            <!-- Proxy URL -->
+            <!-- Network Settings -->
             <Border Padding="20" CornerRadius="8"
                     Background="{DynamicResource SemiColorFillQuaternary}">
                 <StackPanel Spacing="12">
-                    <TextBlock Text="代理设置" FontSize="16" FontWeight="SemiBold" />
+                    <TextBlock Text="网络设置" FontSize="16" FontWeight="SemiBold" />
+                    <TextBlock Text="代理地址" FontSize="13" Opacity="0.7" />
                     <TextBox Text="{Binding ProxyUrl}"
                              PlaceholderText="例如: http://127.0.0.1:7890"
+                             VerticalContentAlignment="Center"
+                             Height="38" />
+                    <Grid ColumnDefinitions="*,24,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="超时时间 (秒)" FontSize="13" Opacity="0.7" />
+                            <NumericUpDown Value="{Binding SocketTimeout}"
+                                           Minimum="0"
+                                           FormatString="0"
+                                           PlaceholderText="默认"
+                                           Height="38"
+                                           VerticalContentAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="重试次数" FontSize="13" Opacity="0.7" />
+                            <NumericUpDown Value="{Binding Retries}"
+                                           Minimum="0"
+                                           Maximum="100"
+                                           FormatString="0"
+                                           Height="38"
+                                           VerticalContentAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Download Settings -->
+            <Border Padding="20" CornerRadius="8"
+                    Background="{DynamicResource SemiColorFillQuaternary}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="下载设置" FontSize="16" FontWeight="SemiBold" />
+                    <TextBlock Text="速度限制" FontSize="13" Opacity="0.7" />
+                    <TextBox Text="{Binding RateLimit}"
+                             PlaceholderText="例如: 1M, 500K (留空不限速)"
+                             VerticalContentAlignment="Center"
+                             Height="38" />
+                    <TextBlock Text="并发分段数" FontSize="13" Opacity="0.7" />
+                    <NumericUpDown Value="{Binding ConcurrentFragments}"
+                                   Minimum="1"
+                                   Maximum="32"
+                                   FormatString="0"
+                                   Height="38"
+                                   VerticalContentAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <!-- Cookie Settings -->
+            <Border Padding="20" CornerRadius="8"
+                    Background="{DynamicResource SemiColorFillQuaternary}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Cookie 设置" FontSize="16" FontWeight="SemiBold" />
+                    <StackPanel Orientation="Horizontal" Spacing="16">
+                        <RadioButton Content="不使用"
+                                     IsChecked="{Binding CookieSourceType, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static models:CookieSourceType.None}}"
+                                     GroupName="Cookie" />
+                        <RadioButton Content="从浏览器获取"
+                                     IsChecked="{Binding CookieSourceType, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static models:CookieSourceType.Browser}}"
+                                     GroupName="Cookie" />
+                        <RadioButton Content="从文件加载"
+                                     IsChecked="{Binding CookieSourceType, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static models:CookieSourceType.File}}"
+                                     GroupName="Cookie" />
+                    </StackPanel>
+                    <ComboBox IsVisible="{Binding CookieSourceType, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static models:CookieSourceType.Browser}}"
+                              SelectedIndex="{Binding CookieBrowserType}"
+                              HorizontalAlignment="Stretch"
+                              Height="38"
+                              VerticalContentAlignment="Center">
+                        <ComboBoxItem Content="Chrome" />
+                        <ComboBoxItem Content="Firefox" />
+                        <ComboBoxItem Content="Edge" />
+                        <ComboBoxItem Content="Safari" />
+                        <ComboBoxItem Content="Opera" />
+                        <ComboBoxItem Content="Brave" />
+                    </ComboBox>
+                    <Grid ColumnDefinitions="*,Auto"
+                          IsVisible="{Binding CookieSourceType, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static models:CookieSourceType.File}}">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding CookieFilePath}"
+                                 IsReadOnly="True"
+                                 VerticalContentAlignment="Center"
+                                 Height="38" />
+                        <Button Grid.Column="1" Margin="8,0,0,0"
+                                Content="浏览..."
+                                Command="{Binding PickCookieFileCommand}"
+                                Height="38"
+                                VerticalContentAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Request Settings -->
+            <Border Padding="20" CornerRadius="8"
+                    Background="{DynamicResource SemiColorFillQuaternary}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="请求设置" FontSize="16" FontWeight="SemiBold" />
+                    <TextBlock Text="User Agent" FontSize="13" Opacity="0.7" />
+                    <TextBox Text="{Binding UserAgent}"
+                             PlaceholderText="留空使用默认"
+                             VerticalContentAlignment="Center"
+                             Height="38" />
+                    <TextBlock Text="Referer" FontSize="13" Opacity="0.7" />
+                    <TextBox Text="{Binding Referer}"
+                             PlaceholderText="留空不发送"
                              VerticalContentAlignment="Center"
                              Height="38" />
                 </StackPanel>

@@ -13,4 +13,9 @@ public class AndroidDialogService : IDialogService
     {
         return Task.FromResult<string?>(null);
     }
+
+    public Task<string?> PickFileAsync(string title)
+    {
+        return Task.FromResult<string?>(null);
+    }
 }

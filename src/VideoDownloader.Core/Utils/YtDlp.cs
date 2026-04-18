@@ -8,27 +8,83 @@ using VideoDownloader.Core.Models;
 
 namespace VideoDownloader.Core.Utils
 {
-    public partial class YtDlp(string url, string videoFolder, string ytDlpPath)
+    public partial class YtDlp(string url, string videoFolder, string ytDlpPath, YtDlpOptions? options = null)
     {
-        private string _getVideoTitle => $"-j \"{url}\"";
+        private List<string> BuildBaseArgs()
+        {
+            var args = new List<string>();
+            if (options == null) return args;
 
-        private Func<string, string> _downloadByFormat => (formatId) => $"-f \"{formatId}\" \"{url}\"";
+            if (!string.IsNullOrWhiteSpace(options.ProxyUrl))
+            {
+                args.Add("--proxy");
+                args.Add(options.ProxyUrl);
+            }
 
-        private async Task<string> QueryInternal(string arg)
+            if (!string.IsNullOrWhiteSpace(options.RateLimit))
+            {
+                args.Add("--rate-limit");
+                args.Add(options.RateLimit);
+            }
+
+            if (options.ConcurrentFragments > 1)
+            {
+                args.Add("--concurrent-fragments");
+                args.Add(options.ConcurrentFragments.ToString());
+            }
+
+            if (options.Retries != 10)
+            {
+                args.Add("--retries");
+                args.Add(options.Retries.ToString());
+            }
+
+            if (options.SocketTimeout.HasValue)
+            {
+                args.Add("--socket-timeout");
+                args.Add(options.SocketTimeout.Value.ToString());
+            }
+
+            if (options.CookieSourceType == CookieSourceType.Browser)
+            {
+                args.Add("--cookies-from-browser");
+                args.Add(options.CookieBrowserType.ToString().ToLower());
+            }
+            else if (options.CookieSourceType == CookieSourceType.File
+                     && !string.IsNullOrWhiteSpace(options.CookieFilePath))
+            {
+                args.Add("--cookies");
+                args.Add(options.CookieFilePath);
+            }
+
+            if (!string.IsNullOrWhiteSpace(options.UserAgent))
+            {
+                args.Add("--user-agent");
+                args.Add(options.UserAgent);
+            }
+
+            if (!string.IsNullOrWhiteSpace(options.Referer))
+            {
+                args.Add("--referer");
+                args.Add(options.Referer);
+            }
+
+            return args;
+        }
+
+        private async Task<string> QueryInternal(IReadOnlyList<string> args)
         {
             var stdOutBuffer = new StringBuilder();
             var stdErrBuffer = new StringBuilder();
 
-            var result = await Cli.Wrap(ytDlpPath)
-                .WithArguments(arg)
+            await Cli.Wrap(ytDlpPath)
+                .WithArguments(args)
                 .WithWorkingDirectory(videoFolder)
                 .WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdOutBuffer))
                 .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stdErrBuffer))
                 .ExecuteAsync();
 
-            var stdOut = stdOutBuffer.ToString();
-
-            return stdOut;
+            return stdOutBuffer.ToString();
         }
 
         public async Task<VideoInfo?> GetVideoInfo()
@@ -37,7 +93,11 @@ namespace VideoDownloader.Core.Utils
             {
                 PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
             };
-            var output = await QueryInternal(_getVideoTitle);
+
+            var args = new List<string> { "-j", url };
+            args.AddRange(BuildBaseArgs());
+
+            var output = await QueryInternal(args);
             try
             {
                 var videoInfo = JsonSerializer.Deserialize<VideoInfo>(output, serializeOptions)!;
@@ -54,9 +114,11 @@ namespace VideoDownloader.Core.Utils
 
         public async Task<bool> DownloadByFormat(string format, Action<double> onProgressChanged)
         {
-            var commandText = _downloadByFormat(format);
+            var args = new List<string> { "-f", format, url };
+            args.AddRange(BuildBaseArgs());
+
             var cmd = Cli.Wrap(ytDlpPath)
-                .WithArguments(commandText)
+                .WithArguments(args)
                 .WithWorkingDirectory(videoFolder);
             await foreach (var cmdEvent in cmd.ListenAsync())
             {

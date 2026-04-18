@@ -31,6 +31,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly INotificationService _notificationService;
     private readonly IDialogService _dialogService;
     private readonly IPlatformService _platformService;
+    private readonly ISettingsService _settingsService;
     private bool _suppressSelectAllSync;
 
     public ObservableCollection<VideoItemViewModel> VideoItems { get; } = [];
@@ -46,6 +47,7 @@ public partial class MainWindowViewModel : ObservableObject
         _notificationService = notificationService;
         _dialogService = dialogService;
         _platformService = platformService;
+        _settingsService = settingsService;
 
         var settings = settingsService.Load();
         SettingsViewModel = new SettingsViewModel(settingsService, dialogService, settings);
@@ -89,10 +91,11 @@ public partial class MainWindowViewModel : ObservableObject
         HasVideoItems = false;
 
         var ytDlpPath = _platformService.GetYtDlpPath();
+        var ytDlpOptions = YtDlpOptions.FromAppSettings(_settingsService.Load());
 
         foreach (var u in urls)
         {
-            var item = new VideoItemViewModel(u, VideoFolder, ytDlpPath, _notificationService);
+            var item = new VideoItemViewModel(u, VideoFolder, ytDlpPath, _notificationService, ytDlpOptions);
             item.StatusChanged += UpdateBatchResolutions;
             item.PropertyChanged += (s, e) =>
             {

@@ -18,6 +18,33 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string proxyUrl = string.Empty;
 
+    [ObservableProperty]
+    private string rateLimit = string.Empty;
+
+    [ObservableProperty]
+    private int concurrentFragments = 1;
+
+    [ObservableProperty]
+    private int retries = 10;
+
+    [ObservableProperty]
+    private decimal? socketTimeout;
+
+    [ObservableProperty]
+    private CookieSourceType cookieSourceType;
+
+    [ObservableProperty]
+    private CookieBrowserType cookieBrowserType;
+
+    [ObservableProperty]
+    private string cookieFilePath = string.Empty;
+
+    [ObservableProperty]
+    private string userAgent = string.Empty;
+
+    [ObservableProperty]
+    private string referer = string.Empty;
+
     private readonly ISettingsService _settingsService;
     private readonly IDialogService _dialogService;
     private bool _isLoading;
@@ -31,6 +58,15 @@ public partial class SettingsViewModel : ObservableObject
         ThemeMode = settings.ThemeMode;
         DownloadFolderPath = settings.DownloadFolderPath ?? string.Empty;
         ProxyUrl = settings.ProxyUrl ?? string.Empty;
+        RateLimit = settings.RateLimit ?? string.Empty;
+        ConcurrentFragments = settings.ConcurrentFragments;
+        Retries = settings.Retries;
+        SocketTimeout = settings.SocketTimeout.HasValue ? settings.SocketTimeout.Value : null;
+        CookieSourceType = settings.CookieSourceType;
+        CookieBrowserType = settings.CookieBrowserType;
+        CookieFilePath = settings.CookieFilePath ?? string.Empty;
+        UserAgent = settings.UserAgent ?? string.Empty;
+        Referer = settings.Referer ?? string.Empty;
         _isLoading = false;
     }
 
@@ -40,15 +76,17 @@ public partial class SettingsViewModel : ObservableObject
         SaveSettings();
     }
 
-    partial void OnDownloadFolderPathChanged(string value)
-    {
-        SaveSettings();
-    }
-
-    partial void OnProxyUrlChanged(string value)
-    {
-        SaveSettings();
-    }
+    partial void OnDownloadFolderPathChanged(string value) => SaveSettings();
+    partial void OnProxyUrlChanged(string value) => SaveSettings();
+    partial void OnRateLimitChanged(string value) => SaveSettings();
+    partial void OnConcurrentFragmentsChanged(int value) => SaveSettings();
+    partial void OnRetriesChanged(int value) => SaveSettings();
+    partial void OnSocketTimeoutChanged(decimal? value) => SaveSettings();
+    partial void OnCookieSourceTypeChanged(CookieSourceType value) => SaveSettings();
+    partial void OnCookieBrowserTypeChanged(CookieBrowserType value) => SaveSettings();
+    partial void OnCookieFilePathChanged(string value) => SaveSettings();
+    partial void OnUserAgentChanged(string value) => SaveSettings();
+    partial void OnRefererChanged(string value) => SaveSettings();
 
     [RelayCommand]
     private async Task PickFolder()
@@ -57,6 +95,16 @@ public partial class SettingsViewModel : ObservableObject
         if (!string.IsNullOrEmpty(path))
         {
             DownloadFolderPath = path;
+        }
+    }
+
+    [RelayCommand]
+    private async Task PickCookieFile()
+    {
+        var path = await _dialogService.PickFileAsync("选择 Cookie 文件");
+        if (!string.IsNullOrEmpty(path))
+        {
+            CookieFilePath = path;
         }
     }
 
@@ -81,6 +129,15 @@ public partial class SettingsViewModel : ObservableObject
             ThemeMode = ThemeMode,
             DownloadFolderPath = DownloadFolderPath,
             ProxyUrl = ProxyUrl,
+            RateLimit = string.IsNullOrWhiteSpace(RateLimit) ? null : RateLimit,
+            ConcurrentFragments = ConcurrentFragments,
+            Retries = Retries,
+            SocketTimeout = SocketTimeout.HasValue ? (int)SocketTimeout.Value : null,
+            CookieSourceType = CookieSourceType,
+            CookieBrowserType = CookieBrowserType,
+            CookieFilePath = string.IsNullOrWhiteSpace(CookieFilePath) ? null : CookieFilePath,
+            UserAgent = string.IsNullOrWhiteSpace(UserAgent) ? null : UserAgent,
+            Referer = string.IsNullOrWhiteSpace(Referer) ? null : Referer,
         });
     }
 }

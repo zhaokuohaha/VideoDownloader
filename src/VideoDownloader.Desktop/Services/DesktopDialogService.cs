@@ -68,4 +68,24 @@ public class DesktopDialogService : IDialogService
 
         return null;
     }
+
+    public async Task<string?> PickFileAsync(string title)
+    {
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            && desktop.MainWindow?.StorageProvider is { } storageProvider)
+        {
+            var result = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = title,
+                AllowMultiple = false,
+            });
+
+            if (result.Count > 0)
+            {
+                return result[0].Path.LocalPath;
+            }
+        }
+
+        return null;
+    }
 }

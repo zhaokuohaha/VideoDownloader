@@ -4,5 +4,6 @@ namespace VideoDownloader.Core.Services
     {
         Task ShowAlertAsync(string title, string content, string closeButtonText);
         Task<string?> PickFolderAsync(string title);
+        Task<string?> PickFileAsync(string title);
     }
 }
